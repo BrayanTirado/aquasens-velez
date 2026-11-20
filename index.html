@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b4f66">
+<meta name="description" content="AquaSens-Vélez: prototipo académico para avisar y seguir los cortes de agua en Vélez, Santander. Datos simulados.">
+<title>AquaSens-Vélez</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 30'%3E%3Cpath fill='%2312a39a' d='M12 0C12 0 0 13 0 20a12 12 0 0 0 24 0C24 13 12 0 12 0z'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+<a class="saltar" href="#contenido">Ir al contenido</a>
+<header class="heroe">
+  <div class="env barra">
+    <div class="marca">
+      <svg width="34" height="42" viewBox="0 0 24 30" aria-hidden="true"><path fill="#7fd6cf" d="M12 0C12 0 0 13 0 20a12 12 0 0 0 24 0C24 13 12 0 12 0z"/><path fill="#fff" opacity=".85" d="M6 20a6 6 0 0 0 6 6v-2.4A3.6 3.6 0 0 1 8.4 20z"/></svg>
+      <div>AquaSens-Vélez<small>Agua potable · Vélez, Santander</small></div>
+    </div>
+    <div class="reloj" aria-live="off">
+      <span class="pulso" id="pulso"></span>
+      <span>Hora simulada <b id="hora">6:00 a. m.</b></span>
+      <button class="chip-btn" id="btnPausa" type="button" aria-pressed="false">⏸ Pausar</button>
+      <button class="chip-btn" id="btnVel" type="button" title="Velocidad de la simulación">×1</button>
+    </div>
+  </div>
+  <div class="env aviso-sim">🧪 <b>Prototipo académico.</b> Los sensores, los vecinos y los mensajes son <b>simulados</b>; no está conectado al acueducto real.</div>
+  <nav class="env pestanas" aria-label="Secciones">
+    <button aria-label="Vecinos" data-vista="vecinos" class="activa">🏠<span>Vecinos</span></button>
+    <button aria-label="Operador" data-vista="operador">🛠️<span>Operador</span></button>
+    <button aria-label="Pruebas" data-vista="pruebas">🧪<span>Pruebas</span></button>
+    <button aria-label="Resultados" data-vista="resultados">📊<span>Resultados</span></button>
+    <button aria-label="Cómo funciona" data-vista="como">❓<span>Cómo funciona</span></button>
+  </nav>
+  <svg class="ola" viewBox="0 0 1440 40" preserveAspectRatio="none" aria-hidden="true"><path fill="#f6f2ec" d="M0 26c120-16 240-22 360-14s240 26 360 26 240-20 360-26 240 0 360 12v16H0z"/></svg>
+</header>
+
+<main id="contenido" class="env">
+
+<!-- ================= VECINOS ================= -->
+<section class="vista activa" id="v-vecinos">
+  <div class="rejilla-2">
+    <article class="tarjeta">
+      <h2><span class="ic">🗺️</span>¿Cómo está el agua en su sector?</h2>
+      <p class="sub">Solo se muestran los daños que el acueducto ya confirmó. Toque su sector para avisar.</p>
+      <div class="sectores" id="sectores"></div>
+      <div class="leyenda">
+        <span><i class="c-normal"></i>✅ Sin daños confirmados</span>
+        <span><i class="c-confirmado"></i>⚠️ Daño confirmado por el acueducto</span>
+        <span><i class="c-confirmado"></i>🔧 Cuadrilla trabajando</span>
+      </div>
+    </article>
+
+    <article class="tarjeta" id="t-avisar">
+      <h2><span class="ic">📣</span>Avisar que hay un problema</h2>
+      <p class="sub">Toma menos de un minuto. No pedimos su nombre.</p>
+      <label class="t" for="selSector">1. ¿En qué sector vive?</label>
+      <select id="selSector"></select>
+      <span class="t">2. ¿Qué está pasando?</span>
+      <div class="opciones" role="radiogroup" aria-label="Qué está pasando">
+        <button type="button" class="opcion sel" data-tipo="interrupcion" role="radio" aria-checked="true"><span>🚱</span>No llega agua</button>
+        <button type="button" class="opcion" data-tipo="baja_presion" role="radio" aria-checked="false"><span>💧</span>Llega muy poca</button>
+        <button type="button" class="opcion" data-tipo="fuga" role="radio" aria-checked="false"><span>🛠️</span>Tubo roto o fuga</button>
+        <button type="button" class="opcion" data-tipo="calidad" role="radio" aria-checked="false"><span>🟤</span>Turbia o con olor</button>
+      </div>
+      <button class="boton" id="btnAvisar" type="button">Enviar aviso</button>
+      <div id="resAviso" aria-live="polite"></div>
+      <div class="nota-calida"><span aria-hidden="true">📞</span><span><b>¿No tiene internet?</b> Puede avisar por mensaje de texto o llamando a la línea del acueducto. El operador registra el aviso por usted.</span></div>
+    </article>
+
+    <article class="tarjeta">
+      <h2><span class="ic">🔎</span>Seguir mi aviso</h2>
+      <p class="sub">Escriba el código que le dimos al avisar.</p>
+      <label class="t" for="txtCodigo">Código</label>
+      <input id="txtCodigo" placeholder="AQ-001-123456" autocomplete="off" inputmode="text">
+      <button class="boton sec" id="btnConsultar" type="button">Consultar</button>
+      <div id="resConsulta" aria-live="polite"></div>
+    </article>
+
+    <article class="tarjeta">
+      <h2><span class="ic">🧭</span>¿Qué pasa con su aviso?</h2>
+      <ol class="pasos">
+        <li><span>El sistema junta su aviso con los de sus vecinos del mismo sector.</span></li>
+        <li><span>Si 3 vecinos avisan en media hora, o un sensor marca una caída de presión, se alerta al acueducto.</span></li>
+        <li><span>Una persona del acueducto revisa. <b>Nada se publica sin esa revisión.</b></span></li>
+        <li><span>Si se confirma, se avisa a todo el sector por la aplicación y por mensaje de texto.</span></li>
+        <li><span>Cuando se repare, le preguntamos si ya tiene agua. Si 3 vecinos dicen que no, el caso se reabre.</span></li>
+      </ol>
+    </article>
+  </div>
+</section>
+
+<!-- ================= OPERADOR ================= -->
+<section class="vista" id="v-operador">
+  <div class="kpis" id="kpisOp"></div>
+  <div class="rejilla-op">
+    <div class="col">
+      <article class="tarjeta">
+        <h2><span class="bloque">BLOQUE 4</span>Alertas para revisar</h2>
+        <p class="sub">Una alerta es un <b>posible</b> problema. Usted decide si se confirma o se descarta.</p>
+        <div class="lista" id="alertas"></div>
+      </article>
+      <article class="tarjeta">
+        <h2><span class="bloque">BLOQUE 5B</span>Daños en atención</h2>
+        <p class="sub">Órdenes de trabajo de lo que se confirmó.</p>
+        <div class="lista" id="casos"></div>
+      </article>
+    </div>
+    <div class="col">
+      <article class="tarjeta">
+        <h2><span class="bloque">BLOQUE 1A</span>Sensores de presión <span class="sello">SIMULADOS</span></h2>
+        <p class="sub">La franja verde es la presión normal (32 a 48 m.c.a.). Toque un sensor para ver su gráfica.</p>
+        <div class="nodos" id="nodos"></div>
+      </article>
+      <article class="tarjeta">
+        <h2><span class="bloque">GRÁFICA</span><span id="tituloGraf">Presión del sensor 1 · última hora</span></h2>
+        <div id="grafica" class="grafica" role="img" aria-label="Gráfica de presión"></div>
+        <p class="sub" id="pieGraf"></p>
+      </article>
+      <article class="tarjeta">
+        <h2><span class="bloque">BLOQUE 6</span>Mapa interno por sector</h2>
+        <p class="sub">Naranja: en revisión (solo lo ve el operador). Rojo: confirmado (lo ve la comunidad).</p>
+        <div class="mini-mapa" id="miniMapa"></div>
+        <div class="fila-btn"><span id="estadoBitacora" class="chip c-ok">🔒 Bitácora íntegra</span><button class="btn-chico" id="btnVerificar" type="button">Verificar ahora</button></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PRUEBAS ================= -->
+<section class="vista" id="v-pruebas">
+  <article class="tarjeta">
+    <h2><span class="ic">🎬</span>Escenarios de prueba</h2>
+    <p class="sub">Cada botón provoca una situación en el sistema en vivo. Abajo queda registrado qué se esperaba y qué pasó. Después vaya a <b>Operador</b> para verlo.</p>
+    <div class="escenarios">
+      <button class="esc" data-esc="normal"><span>✅</span><b>Todo normal</b><small>Quita fugas, presiones altas y fallas</small></button>
+      <button class="esc" data-esc="fuga"><span>💧</span><b>Fuga en el sensor 3</b><small>La presión cae por debajo de 32</small></button>
+      <button class="esc" data-esc="alta"><span>⬆️</span><b>Presión muy alta en el sensor 2</b><small>Sube por encima de 48</small></button>
+      <button class="esc" data-esc="senal"><span>📡</span><b>Se cae la señal del sensor 5</b><small>Deja de enviar datos</small></button>
+      <button class="esc" data-esc="imposible"><span>🚫</span><b>Lectura imposible</b><small>Llega −5 m.c.a. de un sensor dañado</small></button>
+      <button class="esc" data-esc="vecinos"><span>🏘️</span><b>3 vecinos sin agua (sector 7)</b><small>Avisos ciudadanos seguidos</small></button>
+      <button class="esc" data-esc="repetidos"><span>🔁</span><b>5 avisos repetidos (sector 2)</b><small>Deben quedar en un solo caso</small></button>
+    </div>
+    <h3 class="h3">Registrar una lectura a mano</h3>
+    <div class="manual">
+      <label>Sensor <select id="manNodo"></select></label>
+      <label>Presión (m.c.a.) <input id="manPresion" type="number" step="0.1" placeholder="40"></label>
+      <button class="boton corto" id="btnManual" type="button">Registrar lectura</button>
+    </div>
+    <div id="resManual" aria-live="polite"></div>
+    <h3 class="h3">Registro de escenarios</h3>
+    <div class="tabla-env"><table><thead><tr><th>Hora sim.</th><th>Escenario</th><th>Qué se esperaba</th><th>Qué pasó</th><th>Resultado</th></tr></thead><tbody id="regEsc"><tr><td colspan="5" class="vacio">Todavía no ha corrido ningún escenario.</td></tr></tbody></table></div>
+  </article>
+
+  <article class="tarjeta">
+    <h2><span class="ic">🧮</span>Pruebas automáticas de la lógica</h2>
+    <p class="sub">Cada prueba crea un sistema nuevo, le aplica una condición y comprueba el resultado. El veredicto lo calcula el programa al ejecutarse; no está escrito de antemano.</p>
+    <div class="fila-btn"><button class="boton corto" id="btnBateria" type="button">▶ Ejecutar las pruebas</button><button class="btn-chico" id="btnCsvPruebas" type="button" disabled>Descargar resultados (CSV)</button></div>
+    <div id="resumenBateria"></div>
+    <div class="tabla-env"><table><thead><tr><th>Código</th><th>Prueba</th><th>Resultado esperado</th><th>Resultado obtenido</th><th>Estado</th></tr></thead><tbody id="tablaBateria"><tr><td colspan="5" class="vacio">Pulse «Ejecutar las pruebas».</td></tr></tbody></table></div>
+  </article>
+</section>
+
+<!-- ================= RESULTADOS ================= -->
+<section class="vista" id="v-resultados">
+  <article class="tarjeta">
+    <h2><span class="ic">🎯</span>Matriz de KPI: metas de la Etapa 3 frente a lo medido</h2>
+    <p class="sub">Resultados de las pruebas de laboratorio del prototipo (6 pruebas, más de 6.000 solicitudes y 7.200 lecturas simuladas). El detalle está en el informe individual.</p>
+    <div class="tabla-env"><table class="tabla-kpi"><thead><tr><th>Indicador</th><th>Meta (Etapa 3)</th><th>Resultado medido</th><th>% de cumplimiento</th><th>Desviación</th><th>Cumple</th></tr></thead><tbody id="tablaKpi"></tbody></table></div>
+    <p class="nota">% de cumplimiento: 100 % si se alcanza la meta; si no, la proporción alcanzada. Desviación: diferencia relativa entre el resultado y la meta (negativa es mejor cuando la meta es un máximo).</p>
+    <div id="barrasKpi" class="barras"></div>
+  </article>
+
+  <article class="tarjeta">
+    <h2><span class="ic">⏱️</span>Indicadores de esta sesión (en vivo)</h2>
+    <p class="sub">Se calculan con lo que ha pasado desde que abrió la página.</p>
+    <div class="kpis" id="kpisSesion"></div>
+  </article>
+
+  <article class="tarjeta">
+    <h2><span class="ic">🧾</span>Registros</h2>
+    <div class="sub-pest" role="tablist">
+      <button class="activa" data-reg="lecturas">Lecturas</button><button data-reg="rechazos">Rechazadas</button><button data-reg="alertas">Alertas</button><button data-reg="bitacora">Bitácora</button>
+    </div>
+    <div class="tabla-env alto"><table><thead id="regCab"></thead><tbody id="regCuerpo"></tbody></table></div>
+    <div class="fila-btn"><button class="btn-chico" id="btnCsvLecturas" type="button">Descargar lecturas (CSV)</button></div>
+  </article>
+</section>
+
+<!-- ================= CÓMO FUNCIONA ================= -->
+<section class="vista" id="v-como">
+  <article class="tarjeta">
+    <h2><span class="ic">🧩</span>Qué parte del diseño de la Etapa 3 hay en cada pantalla</h2>
+    <p class="sub">El prototipo implementa los seis bloques de la <a href="https://www.figma.com/make/de5pS5mKNtkYLHhAUYfRCN/Aquasens" target="_blank" rel="noopener">arquitectura integrada del grupo</a>.</p>
+    <div class="tabla-env"><table><thead><tr><th>Bloque de la Etapa 3</th><th>Dónde se ve</th><th>Variables y reglas</th><th>¿Real o simulado?</th></tr></thead><tbody>
+      <tr><td><b>1A.</b> Monitoreo de la red</td><td>Operador → Sensores de presión</td><td>5 sensores; presión, caudal y nivel; una lectura por minuto simulado</td><td><span class="chip c-aviso">Simulado</span> modelo matemático, no sensores físicos</td></tr>
+      <tr><td><b>1B.</b> Participación ciudadana</td><td>Vecinos → Avisar</td><td>Sector, tipo de problema, canal (web, SMS, línea)</td><td><span class="chip c-ok">Funciona</span> el formulario; los vecinos de los escenarios son simulados</td></tr>
+      <tr><td><b>2.</b> Captura y validación</td><td>Pruebas → Lectura a mano / Lectura imposible</td><td>Rechaza datos incompletos y valores imposibles (&lt; 0 o &gt; 120 m.c.a.); junta avisos repetidos</td><td><span class="chip c-ok">Funciona</span></td></tr>
+      <tr><td><b>3.</b> Base de datos centralizada</td><td>Resultados → Registros</td><td>Lecturas, avisos, alertas, órdenes y bitácora encadenada con SHA-256</td><td><span class="chip c-ok">Funciona</span> en la memoria del navegador</td></tr>
+      <tr><td><b>4.</b> Análisis y alertas</td><td>Operador → Alertas para revisar</td><td>Presión fuera de 32–48 en 2 lecturas seguidas; 3 avisos en 30 min; sensor sin datos 3 min; prioridad IP</td><td><span class="chip c-ok">Funciona</span></td></tr>
+      <tr><td><b>5A.</b> Verificación humana</td><td>Operador → Confirmar / Descartar</td><td>Ninguna alerta se publica sin decisión de una persona</td><td><span class="chip c-ok">Funciona</span></td></tr>
+      <tr><td><b>5B.</b> Mantenimiento</td><td>Operador → Daños en atención</td><td>Orden de trabajo; para marcar solucionado hay que escribir qué se hizo</td><td><span class="chip c-ok">Funciona</span></td></tr>
+      <tr><td><b>6.</b> Consulta y comunicación</td><td>Vecinos → mapa y Seguir mi aviso</td><td>Aviso a los 100 usuarios del sector (15 % por SMS); mapa sin datos personales</td><td><span class="chip c-aviso">Simulado</span> los mensajes se cuentan, no se envían</td></tr>
+    </tbody></table></div>
+  </article>
+
+  <div class="rejilla-2">
+    <article class="tarjeta">
+      <h2><span class="ic">✔️</span>Lo que funciona de verdad</h2>
+      <ul class="lista-simple">
+        <li>Todas las reglas: validación, detección, prioridad, decisión humana, órdenes y reapertura.</li>
+        <li>La bitácora: se puede comprobar que nadie la alteró.</li>
+        <li>Las pruebas automáticas y el cálculo de indicadores.</li>
+        <li>La descarga de registros en CSV.</li>
+      </ul>
+    </article>
+    <article class="tarjeta">
+      <h2><span class="ic">🧪</span>Lo que es simulado</h2>
+      <ul class="lista-simple">
+        <li>Las lecturas de presión: salen de un modelo (40 m.c.a. ± variación del día + ruido), no de sensores IoT.</li>
+        <li>Los vecinos de los escenarios y los 1.200 usuarios registrados.</li>
+        <li>Los mensajes de texto: se cuentan, pero no se envían.</li>
+        <li>El reloj: un minuto simulado pasa cada 2 segundos.</li>
+      </ul>
+    </article>
+  </div>
+
+  <article class="tarjeta">
+    <h2><span class="ic">📖</span>Palabras sencillas</h2>
+    <dl class="glosario">
+      <dt>Presión (m.c.a.)</dt><dd>La fuerza con la que llega el agua. «m.c.a.» es «metros de columna de agua»: 40 m.c.a. es como si el agua bajara de un tanque de 40 metros de alto. Si baja de 32 casi no sale; si pasa de 48 se pueden reventar tubos.</dd>
+      <dt>Caudal</dt><dd>Cuánta agua pasa por el tubo cada minuto.</dd>
+      <dt>Alerta</dt><dd>Un aviso de que <b>puede</b> haber un problema. Una persona la revisa antes de avisar a todos.</dd>
+      <dt>Caso o incidencia</dt><dd>Un problema confirmado que la cuadrilla debe atender.</dd>
+    </dl>
+  </article>
+  <p class="creditos">Prototipo de bajo nivel · Proyecto de Ingeniería I (202337120) · UNAD · Grupo 140 · Brayan Stiven Tirado Vargas · 2026</p>
+</section>
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="motor.js"></script>
+<script src="datos_lab.js"></script>
+<script src="pruebas.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
